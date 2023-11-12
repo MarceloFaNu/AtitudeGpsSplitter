@@ -10,6 +10,6 @@ Além de ter que obter uma chave de desenvolvimento e criar um projeto devidamen
 
 Os valores criptografados que você obteve executando a aplicação Crypton deverão ser inseridos no arquivo [appsettings.json](AtitudeGpsSplitterApp/wwwroot/appsettings.json) deste projeto.
 
-Por fim, você deverá compilar o projeto [CryptonPlugin](CryptonPlugin), com as configurações utilizadas para criptografar a chave de desenvolvimento e o ID de mapa, para um arquivo *dll*, e substituir o que está neste projeto [neste diretório](plugins/Crypton).
+Por fim, você deverá compilar o projeto [CryptonPlugin](https://github.com/MarceloFaNu/Crypton/tree/master/CryptonPlugin), com as configurações utilizadas para criptografar a chave de desenvolvimento e o ID de mapa, para um arquivo *dll*, e substituir o que está neste projeto [neste diretório](plugins/Crypton).
 
 Eu sei que isso tudo dá uma trabalheira e tanto, mas ninguém vai querer correr o risco de ter sua chave de desenvolvimento do Maps da Google perambulando pelada por aí :relaxed:
