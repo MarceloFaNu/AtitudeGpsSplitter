@@ -1,0 +1,117 @@
+﻿@using AtitudeGpsMauiApp.Domain.Enumeradores;
+@using AtitudeGpsSplitterApp.Core.Models;
+@using AtitudeGpsSplitterApp.Domain.Extensions;
+@using AtitudeGpsSplitterApp.Viewmodels;
+@using System.Text.Json;
+@inject IJSRuntime JSRuntime
+
+
+<h1>Análise de Dados Coletados</h1>
+
+<div class="form-group mt-4">
+    <label for="resumoTextArea" class="form-label">Insira os dados do log de resumo</label>
+    <textarea class="form-control" id="resumoTextArea" rows="4" @bind="@_resumoTextArea" style="font-size:small;"></textarea>
+</div>
+<div class="form-group mt-4">
+    <label for="copilotoTextArea" class="form-label">Insira os dados do log do copiloto, se houver</label>
+    <textarea class="form-control" id="copilotoTextArea" rows="4" @bind="@_copilotoTextArea" style="font-size:small"></textarea>
+</div>
+<div class="form-group mt-4">
+    <label for="monitorTextArea" class="form-label">Insira os dados do log do monitor</label>
+    <textarea class="form-control" id="monitorTextArea" rows="4" @bind="@_monitorTextArea" style="font-size:small"></textarea>
+</div>
+<div class="form-group mt-4 mb-4">
+    <button class="btn btn-primary" @onclick="@AtivaLogs">Carregar Logs</button>
+</div>
+
+<Painel @ref="_painel" Viewmodel="@_painelViewmodel">
+    <childContent><h4>Mapa</h4></childContent>
+    <Subtitulo><h5>Posicionamento dos marcadores</h5></Subtitulo>
+</Painel>
+
+@code {
+    private Painel? _painel;
+    private PainelViewmodel _painelViewmodel = new();
+    private string _resumoTextArea = string.Empty;
+    private string _monitorTextArea = string.Empty;
+    private string _copilotoTextArea = string.Empty;
+
+    private async Task AtivaLogs()
+    {
+        if (_painel is not null)
+        {
+            _painel.LimpaTodosSelects();
+            await _painel.RedefineSelects();
+        }
+
+        var resumos = CarregaResumos();
+        var atitudes = CarregaCopiloto(resumos);
+        var snapshots = CarregaMonitor(atitudes);
+
+        if (resumos == null || (!resumos.Any()) ||
+            atitudes == null || (!atitudes.Any()) ||
+            snapshots == null || (!snapshots.Any()))
+            return;
+
+        PreencheViewmodelDoPainel(resumos!, atitudes!, snapshots!);
+
+        ((IJSInProcessRuntime)JSRuntime).InvokeVoid("alert", "Novos logs carregados.");
+    }
+
+    private IEnumerable<Resumo>? CarregaResumos()
+    {
+        if (string.IsNullOrWhiteSpace(_resumoTextArea)) return null;
+
+        var resumos = _resumoTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Resumo>(l));
+        if (resumos.IsNullOrEmptyCollection()) return null;
+        resumos = resumos.RemoveNulls();
+        var resumosOrdenados = resumos.OrderBy(r => r!.Id);
+        return resumosOrdenados!;
+    }
+
+    private IEnumerable<Copiloto>? CarregaCopiloto(IEnumerable<Resumo>? resumosOrdenados)
+    {
+        if (string.IsNullOrWhiteSpace(_copilotoTextArea)) return null;
+
+        var atitudes = _copilotoTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Copiloto>(l));
+        if (atitudes.IsNullOrEmptyCollection()) return null;
+        atitudes = atitudes.RemoveNulls();
+        var atitudesOrdenadas = atitudes.OrderBy(a => a!.Id).ToList();        
+        return atitudesOrdenadas!;
+    }
+
+    private IEnumerable<Snapshot>? CarregaMonitor(IEnumerable<Copiloto?>? atitudesOrdenadas)
+    {
+        if (string.IsNullOrWhiteSpace(_monitorTextArea)) return null;
+
+        var snapshots = _monitorTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Snapshot>(l));
+        if (snapshots.IsNullOrEmptyCollection()) return null;
+        snapshots = snapshots.RemoveNulls();
+        var snapshotsOrdenados = snapshots.OrderBy(s => s!.Id).ToList();
+        return snapshotsOrdenados!;
+    }
+
+    private void PreencheViewmodelDoPainel(
+        IEnumerable<Resumo> resumos,
+        IEnumerable<Copiloto> atitudes,
+        IEnumerable<Snapshot> snapshots)
+    {
+        _painelViewmodel.Resumos = resumos.ToList();
+        _painelViewmodel.Copilotos = atitudes.ToList();
+        _painelViewmodel.Snapshots = snapshots.ToList();
+
+        foreach (var resumo in resumos)
+        {
+            if (resumo != null)
+                _painelViewmodel.ResumosDtos.Add(
+                    new Domain.DTO.ResumoDTO
+                    {
+                        Valor = resumo.Id.ToString(),
+                        Descricao = resumo.Id +
+                            " - Sens: " + resumo.SensibilidadeGps +
+                            " | DistMin: " + resumo.DistanciaMinimaConsiderada +
+                            " | Decims: " + resumo.FatorDeCasasDecimais
+                    });
+        }
+    }
+}

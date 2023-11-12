@@ -1,0 +1,447 @@
+﻿
+<div>@childContent</div>
+<div>@Subtitulo</div>
+
+<div class="row">
+    <div class="col">
+        <div class="img-fluid" id="map" style="height:100%;width:100%;"></div>
+        <div class="img-fluid visually-hidden" id="hole" style="height:400px;width:100%;background-color:lightgray;"></div>
+    </div>
+    <div class="col-4">
+        <div class="form-group">
+            <label for="selectResumo" class="form-label">Resumo</label>
+            <select id="selectResumo" class="form-select" aria-label="Opções para selecionar um resumo" @onchange='async e => await SelectResumo_OnChangedAsync(e)'>
+                <option value="default" selected>Selecione um resumo</option>
+                @foreach (var item in Viewmodel.ResumosDtos)
+                {
+                    <option value="@item.Valor">@item.Descricao</option>
+                }
+            </select>
+        </div>
+        <div class="form-group mt-4">
+            <label for="selectAtitude" class="form-label">Atitude</label>
+            <select id="selectAtitude" class="form-select" aria-label="Opções para selecionar as atitudes Gps" @onchange='async e => await SelectAtitude_OnChangedAsync(e)'>
+                <option value="default" selected>Selecione uma atitude</option>
+                <option value="todas" selected>Todas</option>
+                @foreach (var item in Viewmodel.CopilotosDtos)
+                {
+                    <option value="@item.Valor">@item.Descricao</option>
+                }
+            </select>
+        </div>
+        <div class="form-group mt-4">
+            <label for="selectIntervalo" class="form-label">Intervalo entre leituras</label>
+            <select id="selectIntervalo" class="form-select" aria-label="Opções para selecionar o intervalo entre cada leitura" @onchange='async e => await SelectIntervalo_OnChangedAsync(e)'>
+                <option value="default">Selecione um intervalo</option>
+                @foreach (var item in Viewmodel.IntervalosDtos)
+                {
+                    <option value="@item.Valor">@item.Descricao</option>
+                }
+            </select>
+        </div>
+        <div class="form-group mt-4">
+            <label for="selectCoords" class="form-label">Coordenadas</label>
+            <select id="selectCoords" class="form-select" aria-label="Opções para selecionar uma coordenada" size="8" @onchange='async e => await SelectCoords_OnChangedAsync(e)'>
+                <option value="default" selected>Selecione uma coordenada</option>
+                @foreach (var item in Viewmodel.SnapshotsDtos)
+                {
+                    <option value="@item.Valor">@item.Descricao</option>
+                }
+            </select>
+        </div>
+        <div class="form-group mt-4">
+            <label for="selectMedia" class="form-label">Aproximação por média aritmética</label>
+            <select id="selectMedia" class="form-select" aria-label="Opções para selecionar cálculo de média" disabled>
+                <option value="default" selected>Leitura única</option>
+                <option value="2">Média a cada 2 leituras</option>
+                <option value="3">Média a cada 3 leituras</option>
+                <option value="4">Média a cada 4 leituras</option>
+                <option value="5">Média a cada 5 leituras</option>
+            </select>
+        </div>
+        <div class="form-group mt-4 mb-4">
+            <button id="btnRenderizarMarcadores" class="btn btn-primary" @onclick="BtnRenderizarMarcadores_OnClickedAsync">Renderizar Marcadores</button>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="@_rawGoogleMapsUrl"></script>
+<script>
+    let marcadores = [];
+
+    var funcoesDoMapa = {
+        // Adds a marker to the map and push to the array.
+        adicionaMarcador: function(objCoords, titulo) {
+            var marker = new google.maps.Marker({
+                position: { lat: objCoords.lat, lng: objCoords.lng },
+                title: objCoords.tit
+            });
+
+            marcadores.push(marker);
+        },
+
+        // Sets the map on all markers in the array.
+        setMapEmTodosOsMarcadores: function (map) {
+            for (let i = 0; i < marcadores.length; i++) {
+                marcadores[i].setMap(map);
+            }
+        },
+
+        preencheArrayDeMarcadores: function (arrayDeCoords) {
+            this.excluiMarcadores();
+            for (let i = 0; i < arrayDeCoords.length; i++) {
+                this.adicionaMarcador(arrayDeCoords[i]);
+            }
+
+            this.setMapEmTodosOsMarcadores(mapa);
+        },
+
+        // Removes the markers from the map, but keeps them in the array.
+        ocultaMarcadores: function () {
+            this.setMapEmTodosOsMarcadores(null);
+        },
+
+        // Deletes all markers in the array by removing references to them.
+        excluiMarcadores: function() {
+            this.ocultaMarcadores();
+            marcadores = [];
+        },
+
+        obtemIndiceDeMarcador: function (id) {
+            let indice = -1;
+            for (let i = 0; i < marcadores.length; i++) {
+                if (marcadores[i].title === id.toString()) {
+                    indice = i;
+                    break;
+                }
+            }
+
+            return indice;
+        },
+
+        alteraCorDoMarcador: function (id, cor, la, lo) {
+            let indice = this.obtemIndiceDeMarcador(id);
+            if (indice < 0) return;
+
+            let marcador = marcadores[indice];
+            let t = marcador.title;
+
+            console.log(
+                "id: " + id + "\n" +
+                "cor: " + cor + "\n" +
+                "lat: " + la + "\n" +
+                "lng: " + lo + "\n" +
+                "indice: " + indice + "\n" +
+                "title: " + marcador.title
+            );
+
+            // Remove o marcador a ser substituído
+            marcador.setMap(null);
+            marcadores.splice(indice, 1);
+
+            let marker;
+
+            if (cor === null || cor === undefined) {
+                marker = new google.maps.Marker({
+                    position: { lat: la, lng: lo },
+                    title: t
+                });
+            } else {
+                // Change the background color.
+                let pinBackground = new google.maps.marker.PinElement({
+                    background: cor,
+                    borderColor: '#008800',
+                    glyphColor: '#008800'
+                });
+
+                marker = new google.maps.marker.AdvancedMarkerElement({
+                    position: { lat: la, lng: lo },
+                    title: t,
+                    content: pinBackground.element,
+                });
+            }
+
+            marker.setMap(mapa);
+            marcadores.splice(indice, 0, marker);
+        },
+
+        destacaMarcador: function (snapshot) {
+            this.alteraCorDoMarcador(snapshot.id, "#00FF00", snapshot.lat, snapshot.lng);
+        },
+
+        restauraMarcador: function (snapshot) {
+            this.alteraCorDoMarcador(snapshot.id, null, snapshot.lat, snapshot.lng);
+        }
+    };
+
+    var funcoesDosSelects = {
+        defineOuObtemOptionResumo: function(opcao) {
+            var ctl = document.getElementById('selectResumo');
+            if (opcao != null) ctl.value = opcao;
+            return ctl.value;
+        },
+
+        defineOuObtemOptionAtitude: function(opcao) {
+            var ctl = document.getElementById('selectAtitude');
+            if (opcao != null) ctl.value = opcao;
+            return ctl.value;
+        },
+
+        defineOuObtemOptionIntervalo: function(opcao) {
+            var ctl = document.getElementById('selectIntervalo');
+            if (opcao != null) ctl.value = opcao;
+            return ctl.value;
+        },
+
+        defineOuObtemOptionSnapshot: function(opcao) {
+            var ctl = document.getElementById('selectCoords');
+            if (opcao != null) ctl.value = opcao;
+            return ctl.value;
+        },
+
+        defineOuObtemOptionMedia: function(opcao) {
+            var ctl = document.getElementById('selectMedia');
+            if (opcao != null) ctl.value = opcao;
+            return ctl.value;
+        }
+    };
+</script>
+
+@code {
+    [Parameter] public RenderFragment? childContent { get; set; }
+    [Parameter] public RenderFragment? Subtitulo { get; set; }
+    [Parameter] public PainelViewmodel Viewmodel { get; set; } = new();
+
+    private const string _opcaoDefault = "default";
+    private string _encryptedGoogleMapsUrl = string.Empty;
+    private string _rawGoogleMapsUrl = string.Empty;
+    private string _encryptedGoogleMapsMapId = string.Empty;
+    private string _rawGoogleMapsMapId = string.Empty;
+
+    private readonly List<Snapshot> _marcadoresDestacados = new();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _encryptedGoogleMapsUrl = Configuration["GoogleMapsUrl"];
+        _encryptedGoogleMapsMapId = Configuration["EncryptedGoogleMapsMapId"];
+        _rawGoogleMapsUrl = CryptonPlugin.Embaralhador.UnRandomizeGoogleMapsJavaScriptApiDecryptedUrl(_encryptedGoogleMapsUrl);
+        _rawGoogleMapsMapId = CryptonPlugin.Embaralhador.UnRandomizeGoogleMapsJavaScriptApiDecryptedUrl(_encryptedGoogleMapsMapId);
+    }
+
+    private async Task SelectResumo_OnChangedAsync(ChangeEventArgs args)
+    {
+        if (args.Value == null) return;
+
+        string? opcaoResumoSelecionado = args.Value.ToString();
+
+        await RedefineSelects();
+
+        if (opcaoResumoSelecionado != _opcaoDefault)
+        {
+            DefineListaDeAtitudes(opcaoResumoSelecionado);
+            DefinelistaDeIntervalos(opcaoResumoSelecionado);
+        }
+    }
+
+    private async Task SelectAtitude_OnChangedAsync(ChangeEventArgs args)
+    {
+        string resumoSelecionado = await js.InvokeAsync<string>("funcoesDosSelects.defineOuObtemOptionResumo");
+        string intervaloSelecionado = await js.InvokeAsync<string>("funcoesDosSelects.defineOuObtemOptionIntervalo");
+
+        if (args.Value == null || resumoSelecionado == _opcaoDefault || intervaloSelecionado == _opcaoDefault) return;
+
+        string? atitudeSelecionada = args.Value.ToString();
+        DefineListaDeSnapshotsAsync(atitudeSelecionada, intervaloSelecionado);
+    }
+
+    private async Task SelectIntervalo_OnChangedAsync(ChangeEventArgs args)
+    {
+        string resumoSelecionado = await js.InvokeAsync<string>("funcoesDosSelects.defineOuObtemOptionResumo");
+        string atitudeSelecionada = await js.InvokeAsync<string>("funcoesDosSelects.defineOuObtemOptionAtitude");
+
+        if (args.Value == null || resumoSelecionado == _opcaoDefault || atitudeSelecionada == _opcaoDefault) return;
+
+        string? intervaloSelecionado = args.Value.ToString();
+        DefineListaDeSnapshotsAsync(atitudeSelecionada, intervaloSelecionado);
+    }
+
+    private async Task SelectCoords_OnChangedAsync(ChangeEventArgs args)
+    {
+        if (args.Value == null || args.Value.ToString() == _opcaoDefault) return;
+
+        var snapshot = Viewmodel.Snapshots.FirstOrDefault(s => s.Id.ToString() == args.Value.ToString());
+        if (snapshot == null) return;
+
+        var snapshotJs = new
+        {
+            id = snapshot.Id,
+            lat = snapshot.Latitude,
+            lng = snapshot.Longitude
+        };
+
+        if (!_marcadoresDestacados.Any(m => m.Id == snapshot.Id))
+        {
+            await js.InvokeVoidAsync("funcoesDoMapa.destacaMarcador", snapshotJs);
+            _marcadoresDestacados.Add(snapshot);
+        }
+        else
+        {
+            await js.InvokeVoidAsync("funcoesDoMapa.restauraMarcador", snapshotJs);
+            _marcadoresDestacados.Remove(snapshot);
+        }
+
+    }
+
+    private async Task BtnRenderizarMarcadores_OnClickedAsync()
+    {
+        if (Viewmodel.SnapshotsDtos == null || !Viewmodel.SnapshotsDtos.Any()) return;
+
+        _marcadoresDestacados.Clear();
+
+        await js.InvokeVoidAsync("funcoesDoMapa.excluiMarcadores");
+
+        var coordenadas = Viewmodel.Snapshots
+            .Where(s => Viewmodel.SnapshotsDtos
+                .Select(sdto => sdto.Valor)
+                .ToList()
+                .Contains(s.Id.ToString()))                 // cruza snapshots com dtos
+            .GroupBy(s => new { s.Latitude, s.Longitude })  // agrupa os repetidos
+            .Select(g => new                                // cria um objeto para ser usado no método do javascript
+            {
+                lat = g.First().Latitude,
+                lng = g.First().Longitude,
+                tit = g.First().Id.ToString()
+            })
+            .ToList();
+
+        await js.InvokeVoidAsync("funcoesDoMapa.preencheArrayDeMarcadores", coordenadas);
+
+        var primeiraCoordenada = Viewmodel.Snapshots.First(s => s.Id.ToString() == Viewmodel.SnapshotsDtos.First().Valor.ToString());
+        if (primeiraCoordenada != null)
+            await js.InvokeVoidAsync("moveToLocation", new { lat = primeiraCoordenada.Latitude, lng = primeiraCoordenada.Longitude });
+    }
+
+    public async Task RedefineSelects()
+    {
+        await js.InvokeVoidAsync("funcoesDosSelects.defineOuObtemOptionAtitude", _opcaoDefault);
+        await js.InvokeVoidAsync("funcoesDosSelects.defineOuObtemOptionIntervalo", _opcaoDefault);
+        await js.InvokeVoidAsync("funcoesDosSelects.defineOuObtemOptionMedia", _opcaoDefault);
+        LimpaSelectAtitudes();
+        LimpaIntervalos();
+        LimpaSelectSnapshots();
+    }
+
+    private async Task DefineOpcaoIntervaloAsync(string intervaloId)
+    {
+        await js.InvokeVoidAsync("funcoesDosSelects.defineOuObtemOptionIntervalo", intervaloId);
+    }
+
+    private void DefineListaDeAtitudes(string? resumoId)
+    {
+        Viewmodel.CopilotosDtos =
+            Viewmodel.Copilotos
+            .Where(c => c.ResumoId.ToString() == resumoId)
+            .Select(c => new Domain.DTO.CopilotoDTO
+                {
+                    Valor = c.Id.ToString(),
+                    Descricao = c.Id + " - " + c.Atitude.ToAtitudeString()
+                })
+            .ToList();
+    }
+
+    private void DefinelistaDeIntervalos(string? resumoSelecionado)
+    {
+        Viewmodel.IntervalosDtos.Clear();
+        if (resumoSelecionado != _opcaoDefault && !string.IsNullOrWhiteSpace(resumoSelecionado))
+        {
+            var objResumo = Viewmodel.Resumos.First(r => r.Id.ToString() == resumoSelecionado);
+            int intervaloX1 = objResumo.IntervaloMinimoEmSegundos;
+            int intervaloX2 = intervaloX1 * 2;
+            int intervaloX3 = intervaloX1 * 3;
+            int intervaloX4 = intervaloX1 * 4;
+            Viewmodel.IntervalosDtos.AddRange(new List<Domain.DTO.IntervaloDTO>
+            {
+                new Domain.DTO.IntervaloDTO { Valor = intervaloX1.ToString(), Descricao = intervaloX1 + "s" },
+                new Domain.DTO.IntervaloDTO { Valor = intervaloX2.ToString(), Descricao = intervaloX2 + "s" },
+                new Domain.DTO.IntervaloDTO { Valor = intervaloX3.ToString(), Descricao = intervaloX3 + "s" },
+                new Domain.DTO.IntervaloDTO { Valor = intervaloX4.ToString(), Descricao = intervaloX4 + "s" },
+            });
+        }
+    }
+
+    private void DefineListaDeSnapshotsAsync(string? atitudeSelecionada, string? intervaloSelecionado)
+    {
+        if (string.IsNullOrWhiteSpace(atitudeSelecionada) || atitudeSelecionada == "todas")
+        {
+            var atitudeIds = Viewmodel.CopilotosDtos.Select(c => c.Valor);
+            Viewmodel.SnapshotsDtos =
+                Viewmodel.Snapshots
+                .Where(s => atitudeIds.Contains(s.CopilotoId.ToString()) && s.Intervalo.ToString() == intervaloSelecionado)
+                .Select(s => new Domain.DTO.SnapshotDTO
+                    {
+                        Valor = s.Id.ToString(),
+                        Descricao = s.Id.ToString() +
+                            " - " + s.DistanciaEmMetros + "m" +
+                            " | " + s.KilometrosPorHora + "Km/h"
+                    })
+                .ToList();
+        }
+        else
+        {
+            Viewmodel.SnapshotsDtos =
+                Viewmodel.Snapshots
+                .Where(s => s.CopilotoId.ToString() == atitudeSelecionada && s.Intervalo.ToString() == intervaloSelecionado)
+                .Select(s => new Domain.DTO.SnapshotDTO
+                    {
+                        Valor = s.Id.ToString(),
+                        Descricao = s.Id.ToString() +
+                                " - " + s.DistanciaEmMetros + "m" +
+                                " | " + s.KilometrosPorHora + "Km/h"
+                    })
+                .ToList();
+        }
+
+        if (Viewmodel.SnapshotsDtos.Count > 1)
+        {
+            // Calcula o tempo decorrido entre o snapshot da vez e seu antecessor, e por isso começa no índice 1, pois
+            // o índice 0 não possui um antecessor
+            for (int i = 1; i < Viewmodel.SnapshotsDtos.Count; i++)
+            {
+                var snapshotDaVez = Viewmodel.Snapshots.First(s => s.Id.ToString() == Viewmodel.SnapshotsDtos[i].Valor);
+                var snapshotAntecessor = Viewmodel.Snapshots.First(s => s.Id.ToString() == Viewmodel.SnapshotsDtos[i - 1].Valor);
+
+                var dateTimeDoSnapshotDaVez = new DateTime(snapshotDaVez.Momentum);
+                var datetimeDoSnapshotAnterior = new DateTime(snapshotAntecessor.Momentum);
+
+                var tempoDecooridoEntreOsSnapthots = dateTimeDoSnapshotDaVez.Subtract(datetimeDoSnapshotAnterior).Seconds;
+
+                Viewmodel.SnapshotsDtos[i].Descricao += " | " + tempoDecooridoEntreOsSnapthots + "s";
+            }
+        }
+    }
+
+    private void LimpaSelectAtitudes()
+    {
+        Viewmodel.CopilotosDtos.Clear();
+    }
+
+    private void LimpaIntervalos()
+    {
+        Viewmodel.IntervalosDtos.Clear();
+    }
+
+    private void LimpaSelectSnapshots()
+    {
+        Viewmodel.SnapshotsDtos.Clear();
+    }
+
+    public void LimpaTodosSelects()
+    {
+        Viewmodel.ResumosDtos.Clear();
+        Viewmodel.CopilotosDtos.Clear();
+        Viewmodel.IntervalosDtos.Clear();
+        Viewmodel.SnapshotsDtos.Clear();
+    }
+}

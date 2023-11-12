@@ -1,0 +1,14 @@
+﻿@page "/"
+
+<ErrorBoundary>
+    <ChildContent>
+        <IndexContent />
+    </ChildContent>
+    <ErrorContent>
+        <div class="blazor-error-boundary">
+            <span>Ocorreu um erro inesperado.</span>
+            <br/>
+            <span>@context.Message</span>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
