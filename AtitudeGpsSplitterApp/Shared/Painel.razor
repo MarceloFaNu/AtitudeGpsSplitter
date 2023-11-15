@@ -1,7 +1,7 @@
 ﻿
 <div>@childContent</div>
 <div>@Subtitulo</div>
-<div>@_subtituloDoResumo</div>
+<div>@((MarkupString)_subtituloDoResumo)</div>
 
 <div class="row">
     <div class="col">
@@ -244,14 +244,20 @@
         {
             DefineListaDeAtitudes(opcaoResumoSelecionado);
             DefinelistaDeIntervalos(opcaoResumoSelecionado);
+
             Resumo objResumo = Viewmodel.Resumos.First(r => r.Id.ToString() == opcaoResumoSelecionado);
             _subtituloDoResumo =
-                $"Sens: {objResumo.SensibilidadeGps.ToString()} | " +
-                $"Interv: {objResumo.IntervaloMinimoEmSegundos} | " +
-                $"Timeout: {objResumo.GeolocationRequestTimeout} | " +
-                $"Dist: {objResumo.DistanciaMinimaConsiderada} | " +
-                $"Decims: {objResumo.FatorDeCasasDecimais} | " +
-                $"Média: [implementar]";
+                $"Nº: <mark>{objResumo.Id.ToString()}</mark> | " +
+                $"Sens: <mark>{objResumo.SensibilidadeGps.ToString()}</mark> | " +
+                $"Interv: <mark>{objResumo.IntervaloMinimoEmSegundos}</mark> | " +
+                $"Timeout: <mark>{objResumo.GeolocationRequestTimeout}</mark> | " +
+                $"Dist: <mark>{objResumo.DistanciaMinimaConsiderada}</mark> | " +
+                $"Decims: <mark>{objResumo.FatorDeCasasDecimais}</mark> | " +
+                $"Média: <mark>{objResumo.MediaAritmetica}</mark>";
+        }
+        else
+        {
+            _subtituloDoResumo = string.Empty;
         }
     }
 
