@@ -1,6 +1,7 @@
 ﻿
 <div>@childContent</div>
 <div>@Subtitulo</div>
+<div>@_subtituloDoResumo</div>
 
 <div class="row">
     <div class="col">
@@ -213,6 +214,7 @@
     [Parameter] public PainelViewmodel Viewmodel { get; set; } = new();
 
     private const string _opcaoDefault = "default";
+    private string _subtituloDoResumo = string.Empty;
     private string _encryptedGoogleMapsUrl = string.Empty;
     private string _rawGoogleMapsUrl = string.Empty;
     private string _encryptedGoogleMapsMapId = string.Empty;
@@ -242,6 +244,14 @@
         {
             DefineListaDeAtitudes(opcaoResumoSelecionado);
             DefinelistaDeIntervalos(opcaoResumoSelecionado);
+            Resumo objResumo = Viewmodel.Resumos.First(r => r.Id.ToString() == opcaoResumoSelecionado);
+            _subtituloDoResumo =
+                $"Sens: {objResumo.SensibilidadeGps.ToString()} | " +
+                $"Interv: {objResumo.IntervaloMinimoEmSegundos} | " +
+                $"Timeout: {objResumo.GeolocationRequestTimeout} | " +
+                $"Dist: {objResumo.DistanciaMinimaConsiderada} | " +
+                $"Decims: {objResumo.FatorDeCasasDecimais} | " +
+                $"Média: [implementar]";
         }
     }
 
