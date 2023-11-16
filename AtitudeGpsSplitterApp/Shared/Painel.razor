@@ -308,6 +308,7 @@
             _marcadoresDestacados.Remove(snapshot);
         }
 
+        await js.InvokeVoidAsync("moveToLocation", new { lat = snapshot.Latitude, lng = snapshot.Longitude });
     }
 
     private async Task BtnRenderizarMarcadores_OnClickedAsync()
