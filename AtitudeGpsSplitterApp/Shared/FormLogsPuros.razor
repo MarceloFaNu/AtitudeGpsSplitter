@@ -1,12 +1,4 @@
-﻿@using AtitudeGpsMauiApp.Domain.Enumeradores;
-@using AtitudeGpsSplitterApp.Core.Models;
-@using AtitudeGpsSplitterApp.Domain.Extensions;
-@using AtitudeGpsSplitterApp.Viewmodels;
-@using System.Text.Json;
-@inject IJSRuntime JSRuntime
-
-
-<h1>Análise de Dados Coletados</h1>
+﻿<h1>Análise de Dados Coletados</h1>
 
 <div class="form-group mt-4">
     <label for="resumoTextArea" class="form-label">Insira os dados do log de resumo</label>
@@ -20,6 +12,12 @@
     <label for="monitorTextArea" class="form-label">Insira os dados do log do monitor</label>
     <textarea class="form-control" id="monitorTextArea" rows="4" @bind="@_monitorTextArea" style="font-size:small"></textarea>
 </div>
+<div class="form-check mt-4">
+    <input class="form-check-input" type="checkbox" @bind="@_salvarCarregamento" id="htmlChkSalvarSessao">
+    <label class="form-check-label" for="htmlChkSalvarSessao">
+        Salvar Carregamento
+    </label>
+</div>
 <div class="form-group mt-4 mb-4">
     <button class="btn btn-primary" @onclick="@AtivaLogs">Carregar Logs</button>
 </div>
@@ -32,9 +30,18 @@
 @code {
     private Painel? _painel;
     private PainelViewmodel _painelViewmodel = new();
+    private bool _salvarCarregamento = true;
     private string _resumoTextArea = string.Empty;
     private string _monitorTextArea = string.Empty;
     private string _copilotoTextArea = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        _resumoTextArea = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_RESUMO);
+        _monitorTextArea = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_MONITOR);
+        _copilotoTextArea = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_COPILOTO);
+    }
 
     private async Task AtivaLogs()
     {
@@ -55,7 +62,18 @@
 
         PreencheViewmodelDoPainel(resumos!, atitudes!, snapshots!);
 
-        ((IJSInProcessRuntime)JSRuntime).InvokeVoid("alert", "Novos logs carregados.");
+        if (_salvarCarregamento)
+        {
+            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_RESUMO, _resumoTextArea]);
+            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_MONITOR, _monitorTextArea]);
+            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_COPILOTO, _copilotoTextArea]);
+        }
+        else
+        {
+            await js.InvokeVoidAsync("localStorageManager.limpaStorage");
+        }
+
+        ((IJSInProcessRuntime)js).InvokeVoid("alert", "Novos logs carregados.");
     }
 
     private IEnumerable<Resumo>? CarregaResumos()
