@@ -94,7 +94,7 @@
         var atitudes = _copilotoTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Copiloto>(l));
         if (atitudes.IsNullOrEmptyCollection()) return null;
         atitudes = atitudes.RemoveNulls();
-        var atitudesOrdenadas = atitudes.OrderBy(a => a!.Id).ToList();        
+        var atitudesOrdenadas = atitudes.OrderBy(a => a!.Id).ToList();
         return atitudesOrdenadas!;
     }
 
@@ -123,13 +123,13 @@
             if (resumo != null)
                 _painelViewmodel.ResumosDtos.Add(
                     new Domain.DTO.ResumoDTO
-                    {
-                        Valor = resumo.Id.ToString(),
-                        Descricao = resumo.Id +
-                            " - Sens: " + resumo.SensibilidadeGps +
-                            " | DistMin: " + resumo.DistanciaMinimaConsiderada +
-                            " | Decims: " + resumo.FatorDeCasasDecimais
-                    });
+                        {
+                            Valor = resumo.Id.ToString(),
+                            Descricao = resumo.Id +
+                                " - Sens: " + resumo.SensibilidadeGps +
+                                " | DistMin: " + resumo.DistanciaMinimaConsiderada +
+                                " | Decims: " + resumo.FatorDeCasasDecimais
+                        });
         }
     }
 }
