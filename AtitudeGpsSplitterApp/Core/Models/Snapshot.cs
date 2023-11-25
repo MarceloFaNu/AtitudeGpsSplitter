@@ -12,6 +12,7 @@ namespace AtitudeGpsSplitterApp.Core.Models
         public double KilometrosPorHora { get; set; }
         public int Intervalo { get; set; }
         public long Momentum { get; set; }
+        public int CorrelatoId { get; set; }
 
         public override string ToString()
         {
