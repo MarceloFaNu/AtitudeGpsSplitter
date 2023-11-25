@@ -51,6 +51,14 @@
             await _painel.RedefineSelects();
         }
 
+        if (string.IsNullOrWhiteSpace(_resumoTextArea) || !_resumoTextArea.HasJsonFormatString() ||
+            string.IsNullOrWhiteSpace(_monitorTextArea) || !_monitorTextArea.HasJsonFormatString() ||
+            string.IsNullOrWhiteSpace(_copilotoTextArea) || !_copilotoTextArea.HasJsonFormatString())
+        {
+            ((JSInProcessRuntime)js).InvokeVoid("alert", "As áreas de texto precisam conter dados no formato Json");
+            return;
+        }
+
         var resumos = CarregaResumos();
         var atitudes = CarregaCopiloto(resumos);
         var snapshots = CarregaMonitor(atitudes);
@@ -78,33 +86,48 @@
 
     private IEnumerable<Resumo>? CarregaResumos()
     {
-        if (string.IsNullOrWhiteSpace(_resumoTextArea)) return null;
-
         var resumos = _resumoTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Resumo>(l));
         if (resumos.IsNullOrEmptyCollection()) return null;
         resumos = resumos.RemoveNulls();
+
+        if (resumos.First().TipoDeLog != TipoDeLogEnum.Resumo)
+        {
+            ((JSInProcessRuntime)js).InvokeVoid("alert", "Formato de log não reconhecido no campo Resumo");
+            return null;
+        }
+
         var resumosOrdenados = resumos.OrderBy(r => r!.Id);
         return resumosOrdenados!;
     }
 
     private IEnumerable<Copiloto>? CarregaCopiloto(IEnumerable<Resumo>? resumosOrdenados)
     {
-        if (string.IsNullOrWhiteSpace(_copilotoTextArea)) return null;
-
         var atitudes = _copilotoTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Copiloto>(l));
         if (atitudes.IsNullOrEmptyCollection()) return null;
         atitudes = atitudes.RemoveNulls();
+
+        if (atitudes.First().TipoDeLog != TipoDeLogEnum.Copiloto)
+        {
+            ((JSInProcessRuntime)js).InvokeVoid("alert", "Formato de log não reconhecido no campo Copiloto");
+            return null;
+        }
+
         var atitudesOrdenadas = atitudes.OrderBy(a => a!.Id).ToList();
         return atitudesOrdenadas!;
     }
 
     private IEnumerable<Snapshot>? CarregaMonitor(IEnumerable<Copiloto?>? atitudesOrdenadas)
     {
-        if (string.IsNullOrWhiteSpace(_monitorTextArea)) return null;
-
         var snapshots = _monitorTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Snapshot>(l));
         if (snapshots.IsNullOrEmptyCollection()) return null;
         snapshots = snapshots.RemoveNulls();
+
+        if (snapshots.First().TipoDeLog != TipoDeLogEnum.Monitor)
+        {
+            ((JSInProcessRuntime)js).InvokeVoid("alert", "Formato de log não reconhecido no campo Monitor");
+            return null;
+        }
+
         var snapshotsOrdenados = snapshots.OrderBy(s => s!.Id).ToList();
         return snapshotsOrdenados!;
     }
