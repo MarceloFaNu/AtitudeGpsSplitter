@@ -128,7 +128,21 @@
             return null;
         }
 
-        var snapshotsOrdenados = snapshots.OrderBy(s => s!.Id).ToList();
+        var snapshotsComIdCorrelacionado = new List<Snapshot>();
+
+        snapshots
+            .GroupBy(s => new { s.Latitude, s.Longitude }).ToList()
+            .ForEach(g =>
+            {
+                g.ToList()
+                .ForEach(s =>
+                {
+                    s.CorrelatoId = g.First().Id;
+                    snapshotsComIdCorrelacionado.Add(s);
+                });
+            });
+
+        var snapshotsOrdenados = snapshotsComIdCorrelacionado.OrderBy(s => s!.Id).ToList();
         return snapshotsOrdenados!;
     }
 
