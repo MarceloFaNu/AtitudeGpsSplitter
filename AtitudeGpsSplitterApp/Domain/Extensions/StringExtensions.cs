@@ -4,6 +4,8 @@
     {
         public static bool HasJsonFormatString(this string value)
         {
+            if (value == null) return false;
+            value = value.Trim();
             return value.StartsWith("{") && value.EndsWith("}");
         }
     }
