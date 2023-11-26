@@ -194,16 +194,16 @@
 
         if (!_marcadoresDestacados.Any(m => m.Id == snapshotRepresentanteDeGrupo.Id))
         {
-            await js.InvokeVoidAsync("funcoesDoMapa.destacaMarcador", marcadorCandidato);
+            await js.InvokeVoidAsync("mapsManager.destacaMarcador", marcadorCandidato);
             _marcadoresDestacados.Add(snapshotRepresentanteDeGrupo);
         }
         else
         {
-            await js.InvokeVoidAsync("funcoesDoMapa.restauraMarcador", marcadorCandidato);
+            await js.InvokeVoidAsync("mapsManager.restauraMarcador", marcadorCandidato);
             _marcadoresDestacados.Remove(snapshotRepresentanteDeGrupo);
         }
 
-        await js.InvokeVoidAsync("moveToLocation", new { lat = snapshotRepresentanteDeGrupo.Latitude, lng = snapshotRepresentanteDeGrupo.Longitude });
+        await js.InvokeVoidAsync("mapsManager.moveToLocation", new { lat = snapshotRepresentanteDeGrupo.Latitude, lng = snapshotRepresentanteDeGrupo.Longitude });
     }
 
     private async Task BtnRenderizarMarcadores_OnClickedAsync()
@@ -212,7 +212,7 @@
 
         _marcadoresDestacados.Clear();
 
-        await js.InvokeVoidAsync("funcoesDoMapa.excluiMarcadores");
+        await js.InvokeVoidAsync("mapsManager.excluiMarcadores");
 
         var coordenadas = Viewmodel.Snapshots
             .Where(s => Viewmodel.SnapshotsDtos
@@ -228,11 +228,11 @@
             })
             .ToList();
 
-        await js.InvokeVoidAsync("funcoesDoMapa.preencheArrayDeMarcadores", coordenadas);
+        await js.InvokeVoidAsync("mapsManager.preencheArrayDeMarcadores", coordenadas);
 
         var primeiraCoordenada = Viewmodel.Snapshots.First(s => s.Id.ToString() == Viewmodel.SnapshotsDtos.First().Valor.ToString());
         if (primeiraCoordenada != null)
-            await js.InvokeVoidAsync("moveToLocation", new { lat = primeiraCoordenada.Latitude, lng = primeiraCoordenada.Longitude });
+            await js.InvokeVoidAsync("mapsManager.moveToLocation", new { lat = primeiraCoordenada.Latitude, lng = primeiraCoordenada.Longitude });
     }
 
     public async Task RedefineSelects()

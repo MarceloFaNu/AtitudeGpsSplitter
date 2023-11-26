@@ -1,44 +1,42 @@
 ﻿// Google Maps
-window.googleMapsConsoleGreeting = function () {
-    console.log("Mapa carregado com sucesso.");
-}
+window.mapsManager = {
+    mapa: null,
+    AdvancedMarkerElement: null,
+    marcadores: [],
 
-window.mapa = null;
-window.AdvancedMarkerElement = null;
+    googleMapsConsoleGreeting: function () {
+        console.log("Mapa carregado com sucesso.");
+    },
 
-function initMap() {
-    var latlng = new google.maps.LatLng(-23.959011, -46.331825);
-    var options = {
-        zoom: 14, center: latlng,
-        mapId: 'xxxxxxxxxxxxxxxxx'
-    };
+    initMap: function () {
+        var latlng = new google.maps.LatLng(-23.959011, -46.331825);
+        var options = {
+            zoom: 14, center: latlng,
+            mapId: 'xxxxxxxxxxxxxxxxx'
+        }
 
-    mapa = new google.maps.Map(document.getElementById("map"), options);
-    AdvancedMarkerElement = google.maps.importLibrary("marker");
-}
+        this.mapa = new google.maps.Map(document.getElementById("map"), options);
+        this.AdvancedMarkerElement = google.maps.importLibrary("marker");
+    },
 
-function moveToLocation(coords) {
-    const center = new google.maps.LatLng(coords.lat, coords.lng);
-    window.mapa.panTo(center);
-}
+    moveToLocation: function(coords) {
+        const center = new google.maps.LatLng(coords.lat, coords.lng);
+        this.mapa.panTo(center);
+    },
 
-window.marcadores = [];
-window.funcoesDoMapa = {
-    // Adds a marker to the map and push to the array.
     adicionaMarcador: function (objCoords) {
         var marker = new google.maps.Marker({
             position: { lat: objCoords.lat, lng: objCoords.lng },
             title: objCoords.tit
         });
 
-        marcadores.push(marker);
-        return marcadores.indexOf(marker);
+        this.marcadores.push(marker);
+        return this.marcadores.indexOf(marker);
     },
 
-    // Sets the map on all markers in the array.
     setMapEmTodosOsMarcadores: function (map) {
-        for (let i = 0; i < marcadores.length; i++) {
-            marcadores[i].setMap(map);
+        for (let i = 0; i < this.marcadores.length; i++) {
+            this.marcadores[i].setMap(map);
         }
     },
 
@@ -48,10 +46,9 @@ window.funcoesDoMapa = {
             this.adicionaMarcador(arrayDeCoords[i]);
         }
 
-        this.setMapEmTodosOsMarcadores(mapa);
+        this.setMapEmTodosOsMarcadores(this.mapa);
     },
 
-    // Removes the markers from the map, but keeps them in the array.
     ocultaMarcadores: function () {
         this.setMapEmTodosOsMarcadores(null);
     },
@@ -59,13 +56,13 @@ window.funcoesDoMapa = {
     // Deletes all markers in the array by removing references to them.
     excluiMarcadores: function () {
         this.ocultaMarcadores();
-        marcadores = [];
+        this.arcadores = [];
     },
 
     obtemIndiceDeMarcador: function (id) {
         let indice = -1;
-        for (let i = 0; i < marcadores.length; i++) {
-            if (marcadores[i].title === id.toString()) {
+        for (let i = 0; i < this.marcadores.length; i++) {
+            if (this.marcadores[i].title === id.toString()) {
                 indice = i;
                 break;
             }
@@ -80,7 +77,7 @@ window.funcoesDoMapa = {
             indice = this.adicionaMarcador({ lat: la, lng: lo, tit: id.toString() });
         }
 
-        let marcador = marcadores[indice];
+        let marcador = this.marcadores[indice];
         let t = marcador.title;
 
         console.log(
@@ -94,7 +91,7 @@ window.funcoesDoMapa = {
 
         // Remove o marcador a ser substituído
         marcador.setMap(null);
-        marcadores.splice(indice, 1);
+        this.marcadores.splice(indice, 1);
 
         let marker;
 
@@ -118,8 +115,8 @@ window.funcoesDoMapa = {
             });
         }
 
-        marker.setMap(mapa);
-        marcadores.splice(indice, 0, marker);
+        marker.setMap(this.mapa);
+        this.marcadores.splice(indice, 0, marker);
     },
 
     destacaMarcador: function (snapshot) {
