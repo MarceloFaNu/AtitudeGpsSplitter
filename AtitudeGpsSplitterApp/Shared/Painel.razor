@@ -287,28 +287,30 @@
     {
         if (args.Value == null || args.Value.ToString() == _opcaoDefault) return;
 
-        var snapshot = Viewmodel.Snapshots.FirstOrDefault(s => s.Id.ToString() == args.Value.ToString());
-        if (snapshot == null) return;
+        var snapshotClicado = Viewmodel.Snapshots.FirstOrDefault(s => s.Id.ToString() == args.Value.ToString());
+        if (snapshotClicado == null) return;
 
-        var snapshotJs = new
+        var snapshotRepresentanteDeGrupo = Viewmodel.Snapshots.FirstOrDefault(s => s.Id == snapshotClicado.CorrelatoId);
+
+        var marcadorCandidato = new
         {
-            id = snapshot.Id,
-            lat = snapshot.Latitude,
-            lng = snapshot.Longitude
+            id = snapshotRepresentanteDeGrupo.Id,
+            lat = snapshotRepresentanteDeGrupo.Latitude,
+            lng = snapshotRepresentanteDeGrupo.Longitude
         };
 
-        if (!_marcadoresDestacados.Any(m => m.Id == snapshot.Id))
+        if (!_marcadoresDestacados.Any(m => m.Id == snapshotRepresentanteDeGrupo.Id))
         {
-            await js.InvokeVoidAsync("funcoesDoMapa.destacaMarcador", snapshotJs);
-            _marcadoresDestacados.Add(snapshot);
+            await js.InvokeVoidAsync("funcoesDoMapa.destacaMarcador", marcadorCandidato);
+            _marcadoresDestacados.Add(snapshotRepresentanteDeGrupo);
         }
         else
         {
-            await js.InvokeVoidAsync("funcoesDoMapa.restauraMarcador", snapshotJs);
-            _marcadoresDestacados.Remove(snapshot);
+            await js.InvokeVoidAsync("funcoesDoMapa.restauraMarcador", marcadorCandidato);
+            _marcadoresDestacados.Remove(snapshotRepresentanteDeGrupo);
         }
 
-        await js.InvokeVoidAsync("moveToLocation", new { lat = snapshot.Latitude, lng = snapshot.Longitude });
+        await js.InvokeVoidAsync("moveToLocation", new { lat = snapshotRepresentanteDeGrupo.Latitude, lng = snapshotRepresentanteDeGrupo.Longitude });
     }
 
     private async Task BtnRenderizarMarcadores_OnClickedAsync()
