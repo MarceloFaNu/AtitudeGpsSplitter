@@ -158,15 +158,17 @@
         foreach (var resumo in resumos)
         {
             if (resumo != null)
+            {
                 _painelViewmodel.ResumosDtos.Add(
                     new Domain.DTO.ResumoDTO
-                        {
-                            Valor = resumo.Id.ToString(),
-                            Descricao = resumo.Id +
-                                " - Sens: " + resumo.SensibilidadeGps +
-                                " | DistMin: " + resumo.DistanciaMinimaConsiderada +
-                                " | Decims: " + resumo.FatorDeCasasDecimais
-                        });
+                    {
+                        Valor = resumo.Id.ToString(),
+                        Descricao = resumo.Id +
+                            " - Sens: " + resumo.SensibilidadeGps +
+                            " | DistMin: " + resumo.DistanciaMinimaConsiderada +
+                            " | Decims: " + resumo.FatorDeCasasDecimais
+                    });
+            }
         }
     }
 }
