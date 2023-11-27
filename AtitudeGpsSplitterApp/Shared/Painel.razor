@@ -117,12 +117,11 @@
 
     protected override void OnInitialized()
     {
-        base.OnInitialized();
-
-        _encryptedGoogleMapsUrl = Configuration["GoogleMapsUrl"];
-        _encryptedGoogleMapsMapId = Configuration["EncryptedGoogleMapsMapId"];
+        _encryptedGoogleMapsUrl = Configuration["GoogleMapsUrl"] ?? string.Empty;
+        _encryptedGoogleMapsMapId = Configuration["EncryptedGoogleMapsMapId"] ?? string.Empty;
         _rawGoogleMapsUrl = CryptonPlugin.Embaralhador.UnRandomizeGoogleMapsJavaScriptApiDecryptedUrl(_encryptedGoogleMapsUrl);
         _rawGoogleMapsMapId = CryptonPlugin.Embaralhador.UnRandomizeGoogleMapsJavaScriptApiDecryptedUrl(_encryptedGoogleMapsMapId);
+        base.OnInitialized();
     }
 
     private async Task SelectResumo_OnChangedAsync(ChangeEventArgs args)
