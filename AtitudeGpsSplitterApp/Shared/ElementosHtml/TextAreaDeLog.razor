@@ -1,0 +1,29 @@
+﻿<div class="form-group mt-4">
+    <label for="conteudoTextArea" class="form-label">@TextAreaLabel</label>
+    <textarea class="form-control" id="conteudoTextArea" rows="4" style="font-size:small;" @onchange="OnTextAreaConteudoChangeHandlerAsync">@TextAreaConteudo</textarea>
+</div>
+
+@code {
+    [Parameter] public string TextAreaLabel { get; set; } = string.Empty;
+    [Parameter] public TipoDeLogEnum TextAreaTipoDeLog { get; set; } = TipoDeLogEnum.Nenhum;
+
+    /*
+     * A propriedade TextAreaConteudo está recebendo um bind bidirecional do seu componente pai através do
+     * comando @bind-TextAreaConteudo="@variavel-no-componente-pai". Eessa abordagem obriga a criação de uma
+     * propriedade pública do tipo EventCallback com o mesmo nome da propriedade sob bind, adicionando-se o sufixo
+     * Changed. Esse callback é implementado automaticamente pelo blazor e será executado no componente pai
+     */
+    [Parameter] public string TextAreaConteudo { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> TextAreaConteudoChanged { get; set; }
+
+    private async Task OnTextAreaConteudoChangeHandlerAsync(ChangeEventArgs e)
+    {
+        TextAreaConteudo = e?.Value?.ToString() ?? string.Empty;
+        
+        if (TextAreaConteudoChanged.HasDelegate)
+            await TextAreaConteudoChanged.InvokeAsync(TextAreaConteudo);
+    }
+}
+
+
+
