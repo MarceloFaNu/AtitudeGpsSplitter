@@ -56,7 +56,7 @@ window.mapsManager = {
     // Deletes all markers in the array by removing references to them.
     excluiMarcadores: function () {
         this.ocultaMarcadores();
-        this.arcadores = [];
+        this.marcadores = [];
     },
 
     obtemIndiceDeMarcador: function (id) {
