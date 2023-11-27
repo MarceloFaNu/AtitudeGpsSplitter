@@ -1,23 +1,16 @@
 ﻿<h1>Análise de Dados Coletados</h1>
 
-<div class="form-group mt-4">
-    <label for="resumoTextArea" class="form-label">Insira os dados do log de resumo</label>
-    <textarea class="form-control" id="resumoTextArea" rows="4" @bind="@_resumoTextArea" style="font-size:small;"></textarea>
-</div>
-<div class="form-group mt-4">
-    <label for="copilotoTextArea" class="form-label">Insira os dados do log do copiloto</label>
-    <textarea class="form-control" id="copilotoTextArea" rows="4" @bind="@_copilotoTextArea" style="font-size:small"></textarea>
-</div>
-<div class="form-group mt-4">
-    <label for="monitorTextArea" class="form-label">Insira os dados do log do monitor</label>
-    <textarea class="form-control" id="monitorTextArea" rows="4" @bind="@_monitorTextArea" style="font-size:small"></textarea>
-</div>
+<TextAreaDeLog TextAreaLabel="Insira os dados do log de resumo" TextAreaTipoDeLog="TipoDeLogEnum.Resumo" @bind-TextAreaConteudo="_resumoTextAreaConteudo" />
+<TextAreaDeLog TextAreaLabel="Insira os dados do log de copiloto" TextAreaTipoDeLog="TipoDeLogEnum.Copiloto" @bind-TextAreaConteudo="_copilotoTextAreaConteudo" />
+<TextAreaDeLog TextAreaLabel="Insira os dados do log de monitor" TextAreaTipoDeLog="TipoDeLogEnum.Monitor" @bind-TextAreaConteudo="_monitorTextAreaConteudo" />
+
 <div class="form-check mt-4">
     <input class="form-check-input" type="checkbox" @bind="@_salvarCarregamento" id="htmlChkSalvarSessao">
     <label class="form-check-label" for="htmlChkSalvarSessao">
         Salvar Carregamento
     </label>
 </div>
+
 <div class="form-group mt-4 mb-4">
     <button class="btn btn-primary" @onclick="@AtivaLogs">Carregar Logs</button>
 </div>
@@ -30,17 +23,18 @@
 @code {
     private Painel? _painel;
     private PainelViewmodel _painelViewmodel = new();
+
     private bool _salvarCarregamento = true;
-    private string _resumoTextArea = string.Empty;
-    private string _monitorTextArea = string.Empty;
-    private string _copilotoTextArea = string.Empty;
+    private string _resumoTextAreaConteudo = string.Empty;
+    private string _monitorTextAreaConteudo = string.Empty;
+    private string _copilotoTextAreaConteudo = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        _resumoTextAreaConteudo = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_RESUMO);
+        _monitorTextAreaConteudo = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_MONITOR);
+        _copilotoTextAreaConteudo = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_COPILOTO);
         await base.OnInitializedAsync();
-        _resumoTextArea = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_RESUMO);
-        _monitorTextArea = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_MONITOR);
-        _copilotoTextArea = await js.InvokeAsync<string>("localStorageManager.obtemItem", ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_COPILOTO);
     }
 
     private async Task AtivaLogs()
@@ -51,9 +45,9 @@
             await _painel.RedefineSelects();
         }
 
-        if (string.IsNullOrWhiteSpace(_resumoTextArea) || !_resumoTextArea.HasJsonFormatString() ||
-            string.IsNullOrWhiteSpace(_monitorTextArea) || !_monitorTextArea.HasJsonFormatString() ||
-            string.IsNullOrWhiteSpace(_copilotoTextArea) || !_copilotoTextArea.HasJsonFormatString())
+        if (string.IsNullOrWhiteSpace(_resumoTextAreaConteudo) || !_resumoTextAreaConteudo.HasJsonFormatString() ||
+            string.IsNullOrWhiteSpace(_monitorTextAreaConteudo) || !_monitorTextAreaConteudo.HasJsonFormatString() ||
+            string.IsNullOrWhiteSpace(_copilotoTextAreaConteudo) || !_copilotoTextAreaConteudo.HasJsonFormatString())
         {
             ((JSInProcessRuntime)js).InvokeVoid("alert", "As áreas de texto precisam conter dados no formato Json");
             return;
@@ -72,9 +66,9 @@
 
         if (_salvarCarregamento)
         {
-            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_RESUMO, _resumoTextArea]);
-            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_MONITOR, _monitorTextArea]);
-            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_COPILOTO, _copilotoTextArea]);
+            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_RESUMO, _resumoTextAreaConteudo]);
+            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_MONITOR, _monitorTextAreaConteudo]);
+            await js.InvokeVoidAsync("localStorageManager.adicionaItem", [ChavesDoLocalStorage.CHAVE_LOCAL_STORAGE_COPILOTO, _copilotoTextAreaConteudo]);
         }
         else
         {
@@ -86,11 +80,11 @@
 
     private IEnumerable<Resumo>? CarregaResumos()
     {
-        var resumos = _resumoTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Resumo>(l));
+        var resumos = _resumoTextAreaConteudo.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Resumo>(l));
         if (resumos.IsNullOrEmptyCollection()) return null;
         resumos = resumos.RemoveNulls();
 
-        if (resumos.First().TipoDeLog != TipoDeLogEnum.Resumo)
+        if (resumos.First()!.TipoDeLog != TipoDeLogEnum.Resumo)
         {
             ((JSInProcessRuntime)js).InvokeVoid("alert", "Formato de log não reconhecido no campo Resumo");
             return null;
@@ -102,11 +96,11 @@
 
     private IEnumerable<Copiloto>? CarregaCopiloto(IEnumerable<Resumo>? resumosOrdenados)
     {
-        var atitudes = _copilotoTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Copiloto>(l));
+        var atitudes = _copilotoTextAreaConteudo.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Copiloto>(l));
         if (atitudes.IsNullOrEmptyCollection()) return null;
         atitudes = atitudes.RemoveNulls();
 
-        if (atitudes.First().TipoDeLog != TipoDeLogEnum.Copiloto)
+        if (atitudes.First()!.TipoDeLog != TipoDeLogEnum.Copiloto)
         {
             ((JSInProcessRuntime)js).InvokeVoid("alert", "Formato de log não reconhecido no campo Copiloto");
             return null;
@@ -118,11 +112,11 @@
 
     private IEnumerable<Snapshot>? CarregaMonitor(IEnumerable<Copiloto?>? atitudesOrdenadas)
     {
-        var snapshots = _monitorTextArea.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Snapshot>(l));
+        var snapshots = _monitorTextAreaConteudo.Trim().Split("\n").Select(l => JsonSerializer.Deserialize<Snapshot>(l));
         if (snapshots.IsNullOrEmptyCollection()) return null;
         snapshots = snapshots.RemoveNulls();
 
-        if (snapshots.First().TipoDeLog != TipoDeLogEnum.Monitor)
+        if (snapshots.First()!.TipoDeLog != TipoDeLogEnum.Monitor)
         {
             ((JSInProcessRuntime)js).InvokeVoid("alert", "Formato de log não reconhecido no campo Monitor");
             return null;
@@ -131,13 +125,13 @@
         var snapshotsComIdCorrelacionado = new List<Snapshot>();
 
         snapshots
-            .GroupBy(s => new { s.Latitude, s.Longitude }).ToList()
+            .GroupBy(s => new { s!.Latitude, s.Longitude }).ToList()
             .ForEach(g =>
             {
                 g.ToList()
                 .ForEach(s =>
                 {
-                    s.CorrelatoId = g.First().Id;
+                    s!.CorrelatoId = g.First()!.Id;
                     snapshotsComIdCorrelacionado.Add(s);
                 });
             });
